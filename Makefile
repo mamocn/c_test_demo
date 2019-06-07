@@ -1,31 +1,31 @@
 CFLAGS:= -Wall -DDEBUG -Iinclude -Llib -m64
 CRITERION:= $(CFLAGS) -lcriterion
 
-LIBS:=$(patsubst src/%.c, lib/%.o, $(wildcard src/*.c))
+LIBS:=$(patsubst src/%.c, tmp/lib/%.o, $(wildcard src/*.c))
+TESTS:=$(patsubst test/%.c, tmp/lib/%.o, $(wildcard test/*.c))
 
-TESTS:=$(patsubst test/%.c, test/%.o, $(wildcard test/*.c))
-DISTS:=$(patsubst test/test_%.o, lib/%.o, $(TESTS))
-DODISTS:=$(patsubst test/test_%.o, test/test_%.test,$(TESTS))
+DISTS:=$(patsubst tmp/lib/test_%.o, tmp/lib/%.o, $(TESTS))
+BINS:=$(patsubst tmp/lib/test_%.o, tmp/bin/test_%.test,$(TESTS))
 
 .PHONY:mkdir test
 
-all: clean test
+all: clean test 
 
 clean:
-	@rm -fr */*.o
-	@rm -fr */*.ts
+	@rm -fr tmp/lib/* tmp/bin/*
 
-$(LIBS):lib/%.o: src/%.c
+$(LIBS):tmp/lib/%.o: src/%.c
 	@gcc -o $@ -c $< $(CFLAGS) 
 
-$(TESTS):test/%.o : test/%.c
+$(TESTS):tmp/lib/%.o : test/%.c
 	@gcc -o $@ -c $< $(CFLAGS)
 
-$(DODISTS): $(TESTS) $(DISTS)
+$(BINS): $(TESTS) $(DISTS)
 	@gcc -o $@ $^ $(CRITERION)
 
-test: $(LIBS) $(TESTS) $(DODISTS)
-	@test/test_*.test
+test: $(LIBS) $(TESTS) $(BINS)
+	@tmp/bin/test_*.test
 
 mkdir:
-	@mkdir src lib include test test
+	@mkdir -p include src test tmp/lib tmp/bin
+
